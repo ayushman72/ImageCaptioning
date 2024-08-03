@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import GPT2LMHeadModel
+from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 from timm import create_model
-from transformers import GPT2TokenizerFast
 from types import SimpleNamespace
 
 

@@ -1,0 +1,7 @@
+numpy
+torch
+transformers
+timm
+matplotlib
+albumentations
+tqdm

@@ -1,14 +1,17 @@
+import numpy as np
+
 import torch
-from models import VisionGPT2Model
 from transformers import GPT2TokenizerFast
+from models import VisionGPT2Model
+
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
+from PIL import Image
+import matplotlib.pyplot as plt
 from types import SimpleNamespace
 import pathlib
 from tkinter import filedialog
-from PIL import Image
-import matplotlib.pyplot as plt
-import numpy as np
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
 
 def download(url:str, filename:str)->pathlib.Path:
     import functools
