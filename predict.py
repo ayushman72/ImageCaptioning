@@ -33,64 +33,63 @@ def download(url:str, filename:str)->pathlib.Path:
 
     return path
 
+def main():
+    model_config = SimpleNamespace(
+        vocab_size = 50257, # GPT2 vocb size
+        embed_dim = 768,    # dim same for both VIT and GPT2
+        num_heads = 12,
+        seq_len = 1024,
+        depth = 12,
+        attention_dropout = 0.1,
+        residual_dropout = 0.1,
+        mlp_ratio = 4,
+        mlp_dropout = 0.1,
+        emb_dropout = 0.1,
+    )
 
-model_config = SimpleNamespace(
-    vocab_size = 50257, # GPT2 vocb size
-    embed_dim = 768,    # dim same for both VIT and GPT2
-    num_heads = 12,
-    seq_len = 1024,
-    depth = 12,
-    attention_dropout = 0.1,
-    residual_dropout = 0.1,
-    mlp_ratio = 4,
-    mlp_dropout = 0.1,
-    emb_dropout = 0.1,
-)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = VisionGPT2Model(model_config).to(device)
+    try:
+        sd = torch.load("captioner.pt", map_location=device)
+    except:
+        print("Model not found. Downloading Model ")
+        url = "https://drive.usercontent.google.com/download?id=1X51wAI7Bsnrhd2Pa4WUoHIXvvhIcRH7Y&export=download&authuser=0&confirm=t&uuid=ae5c4861-4411-4f81-88cd-66ea30b6fe2b&at=APZUnTWodeDt1upcQVMej2TDcADs%3A1722666079498"
+        path = download(url, "captioner.pt")
+        sd = torch.load(path, map_location=device)
 
-model = VisionGPT2Model(model_config).to(device)
-try:
-    sd = torch.load("captioner.pt", map_location=device)
-except:
-    print("Model not found. Downloading Model ")
-    url = "https://drive.usercontent.google.com/download?id=1X51wAI7Bsnrhd2Pa4WUoHIXvvhIcRH7Y&export=download&authuser=0&confirm=t&uuid=ae5c4861-4411-4f81-88cd-66ea30b6fe2b&at=APZUnTWodeDt1upcQVMej2TDcADs%3A1722666079498"
-    path = download(url, "captioner.pt")
-    sd = torch.load(path, map_location=device)
+    model.load_state_dict(sd)
+    model.eval()
+    tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 
-model.load_state_dict(sd)
-model.eval()
-tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
+    tfms = A.Compose([
+        A.Resize(224, 224),
+        A.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5],always_apply=True),
+        ToTensorV2()
+    ])
 
+    test_img:str = filedialog.askopenfilename(title = "Select an image",
+                                        filetypes = (("jpeg files","*.jpg"),("png files",'*.png'),("all files","*.*")))
 
-test_img:str = filedialog.askopenfilename(title = "Select an image",
-                                       filetypes = (("jpeg files","*.jpg"),("png files",'*.png'),("all files","*.*")))
+    im = Image.open(test_img).convert("RGB")
 
-tfms = A.Compose([
-    A.Resize(224, 224),
-    A.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5],always_apply=True),
-    ToTensorV2()
-])
+    det = True #generates deterministic results
+    temp = 1.0 #when det is true, temp has no effect
+    max_tokens = 50
 
+    image = np.array(im)
+    image:torch.Tensor = tfms(image=image)['image']
+    image = image.unsqueeze(0).to(device)
+    seq = torch.ones(1,1).to(device).long()*tokenizer.bos_token_id
 
-im = Image.open(test_img).convert("RGB")
+    caption = model.generate(image, seq, max_tokens, temp, det)
+    caption = tokenizer.decode(caption.numpy(), skip_special_tokens=True)
 
-det = True #generates deterministic results
-temp = 1.0 #when det is true, temp has no effect
-max_tokens = 50
-
-image = np.array(im)
-image:torch.Tensor = tfms(image=image)['image']
-image = image.unsqueeze(0).to(device)
-seq = torch.ones(1,1).to(device).long()*tokenizer.bos_token_id
-
-caption = model.generate(image, seq, max_tokens, temp, det)
-caption = tokenizer.decode(caption.numpy(), skip_special_tokens=True)
-
-plt.imshow(im)
-plt.title(f"Predicted : {caption}")
-plt.axis('off')
-plt.show()
+    plt.imshow(im)
+    plt.title(f"Predicted : {caption}")
+    plt.axis('off')
+    plt.show()
 
 
-    
+if  __name__ == "__main__":
+    main()
