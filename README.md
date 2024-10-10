@@ -12,6 +12,8 @@ The model was trained on the dataset Flickr30k which comprises of 30k images and
 The model was trained for 8 epochs (which took 10hrs on kaggle's P100 GPU)
 
 ## Results
+The model acieved a BLEU-4 score of 0.2115, CIDEr score of 0.4, METEOR score of 0.25, and SPICE score of 0.19 on the Flickr8k dataset
+
 These are the loss curves.
 
 
