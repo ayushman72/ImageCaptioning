@@ -3,7 +3,7 @@
 This is my attempt to make a transformer model which takes image as the input and provides a caption for the image
 
 ## Model Architecture
-It comprises of 12 ViT decoders and 12 GPT2 decoders
+It comprises of 12 ViT encoder and 12 GPT2 decoders
 
 ![Model Architecture](images/model.png)
 
